@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SSML-H 1.0, the Hangry Labs extension profile for W3C SSML 1.1.">
+  <title>SSML-H 1.0 | Hangry Labs</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="https://hangrylabs.app/" aria-label="Hangry Labs home">
+      <img src="assets/hangrylabs_logo.webp" alt="Hangry Labs">
+    </a>
+    <nav aria-label="Specification navigation">
+      <a href="#format">Format</a>
+      <a href="#voices">Voice definitions</a>
+      <a href="#conformance">Conformance</a>
+      <a href="specification.md">Full specification</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div class="intro-copy">
+        <p class="eyebrow">Hangry Labs Standard · Version 1.0</p>
+        <h1>SSML-H</h1>
+        <p class="lede">A backward-compatible extension profile for speech systems that need standard SSML controls and local generative capabilities such as on-demand character voices.</p>
+        <div class="status-row" aria-label="Specification identity">
+          <span>SSML 1.1 base</span>
+          <span>Hardened XML</span>
+          <span>Local-first</span>
+        </div>
+      </div>
+      <div class="identity-panel">
+        <span>Namespace</span>
+        <code>https://hangrylabs.app/ns/ssml-h/1.0</code>
+        <span>Example prefix</span>
+        <code>h:</code>
+        <span>Input mode</span>
+        <code>ssml-h</code>
+      </div>
+    </section>
+
+    <section id="format" class="section-band">
+      <div class="section-heading">
+        <p class="section-number">01</p>
+        <div><h2>Standard body, extended metadata</h2><p>SSML-H preserves the W3C <code>&lt;speak&gt;</code> root and standard synthesis body. Hangry Labs declarations live inside standard <code>&lt;metadata&gt;</code>.</p></div>
+      </div>
+      <pre><code>&lt;speak
+  version="1.1"
+  xmlns="http://www.w3.org/2001/10/synthesis"
+  xmlns:h="https://hangrylabs.app/ns/ssml-h/1.0"
+  xml:lang="en-US"&gt;
+
+  &lt;metadata&gt;
+    &lt;h:extensions version="1.0"&gt;
+      &lt;h:voice-definition
+        name="Bob"
+        gender="male"
+        age="elderly"
+        accent="american"
+        scope="request"
+        seed="4242" /&gt;
+    &lt;/h:extensions&gt;
+  &lt;/metadata&gt;
+
+  &lt;voice name="Bob"&gt;Are we ready?&lt;/voice&gt;
+  &lt;break time="300ms" /&gt;
+  &lt;prosody rate="slow"&gt;Everything is prepared.&lt;/prosody&gt;
+&lt;/speak&gt;</code></pre>
+      <div class="compatibility-grid">
+        <article><strong>Pure SSML remains valid</strong><p>An SSML document without Hangry declarations can be submitted unchanged to an SSML-H processor.</p></article>
+        <article><strong>Extensions are explicit</strong><p>Processors never infer XML from plain text. Clients deliberately select the <code>ssml-h</code> input mode.</p></article>
+        <article><strong>Fallback is honest</strong><p>A standard processor can ignore extension metadata, but cannot create or resolve a dynamically declared voice.</p></article>
+      </div>
+    </section>
+
+    <section id="voices" class="section-band accent-band">
+      <div class="section-heading">
+        <p class="section-number">02</p>
+        <div><h2>Dynamic character voices</h2><p>The first SSML-H extension creates a bounded local voice reference, then uses standard <code>&lt;voice&gt;</code> turns.</p></div>
+      </div>
+      <div class="definition-layout">
+        <div class="attribute-table" role="table" aria-label="Voice definition attributes">
+          <div role="row"><strong role="cell">name</strong><span role="cell">Portable identifier used by standard voice turns.</span></div>
+          <div role="row"><strong role="cell">scope</strong><span role="cell"><code>request</code> for temporary use or <code>profile</code> for atomic persistence.</span></div>
+          <div role="row"><strong role="cell">replace</strong><span role="cell">Explicitly permits replacement of a persistent profile.</span></div>
+          <div role="row"><strong role="cell">seed</strong><span role="cell">Unsigned 32-bit seed for deterministic voice design.</span></div>
+          <div role="row"><strong role="cell">design</strong><span role="cell">Capability-driven gender, age, pitch, style, languages, accent, and dialect.</span></div>
+          <div role="row"><strong role="cell">h:sample</strong><span role="cell">Optional known bootstrap transcript; no ASR is needed.</span></div>
+        </div>
+        <aside class="lifecycle">
+          <h3>Persistence transaction</h3>
+          <ol>
+            <li>Validate the complete document.</li>
+            <li>Generate a bounded bootstrap sample.</li>
+            <li>Reuse one in-memory prompt for every turn.</li>
+            <li>Synthesize and encode the complete output.</li>
+            <li>Atomically publish requested profiles.</li>
+            <li>Clean staging on success, failure, or cancellation.</li>
+          </ol>
+        </aside>
+      </div>
+    </section>
+
+    <section id="conformance" class="section-band">
+      <div class="section-heading">
+        <p class="section-number">03</p>
+        <div><h2>Bounded by design</h2><p>Implementations publish capabilities and reject unsupported behavior before inference.</p></div>
+      </div>
+      <div class="rules-grid">
+        <article><h3>Parsing</h3><p>DTD declarations, entities, external references, unknown synthesis namespaces, and unsupported markup are errors.</p></article>
+        <article><h3>Resources</h3><p>Source size, elements, nesting, breaks, definitions, synthesis units, bootstrap text, model tokens, and output duration are bounded.</p></article>
+        <article><h3>Streaming</h3><p>Streaming and complete output share one plan. A disconnect prevents profile publication and removes staged resources.</p></article>
+        <article><h3>Capabilities</h3><p>Processors report their standard elements, voice properties, languages, pronunciation alphabets, persistence policy, and limits.</p></article>
+      </div>
+      <div class="notice"><strong>SSML-H is a Hangry Labs standard.</strong> It builds on <a href="https://www.w3.org/TR/speech-synthesis/">W3C SSML 1.1</a>, but it is not a W3C Recommendation and does not claim identical rendering across speech engines.</div>
+    </section>
+  </main>
+
+  <footer>
+    <span>SSML-H 1.0 · Hangry Labs</span>
+    <a href="specification.md">Normative specification</a>
+    <a href="https://github.com/hangry-labs/ssml-h-tools">Reference tools</a>
+    <a href="LICENSE.md">License</a>
+  </footer>
+</body>
+</html>

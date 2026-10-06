@@ -1,0 +1,6 @@
+.AGENTS.md
+.ai/
+.idea/
+.vscode/
+*.tmp
+*.log

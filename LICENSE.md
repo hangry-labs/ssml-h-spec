@@ -1,6 +1,14 @@
 # W3C Software and Document License - 2023 Version
 
-Copyright 2026 Hangry Labs.
+Copyright © 2026 Hangry Labs.
+
+SSML-H is independently developed by Hangry Labs. It is not a W3C
+Recommendation and is not endorsed by W3C.
+
+The terms below are reproduced from the W3C Software and Document License. The
+square-bracketed fields in the modification-notice example are intentionally
+part of W3C's template. They are instructions for authors of derivative works,
+not unfinished SSML-H project metadata.
 
 This work is being provided by the copyright holders under the following
 license.
@@ -21,10 +29,12 @@ thereof, including modifications:
   conditions. If none exist, the W3C software and document short notice should
   be included.
 - Notice of any changes or modifications, through a copyright statement on
-  the new code or document such as: "This software or document includes
-  material copied from or derived from [title and URI of the W3C document].
-  Copyright © [$year-of-document] World Wide Web Consortium.
-  https://www.w3.org/copyright/software-license-2023/"
+  the new code or document such as:
+
+  > This software or document includes material copied from or derived from
+  > [title and URI of the W3C document]. Copyright © [$year-of-document] World
+  > Wide Web Consortium.
+  > <https://www.w3.org/copyright/software-license-2023/>
 
 ## Disclaimers
 

@@ -11,9 +11,10 @@ Language. It preserves standard SSML document structure and controls while
 adding bounded, portable features that are useful in local generative speech
 systems. The `H` stands for Hangry Labs.
 
-The first SSML-H extension is dynamic voice definition: a document can define
+SSML-H initially defines two related extensions: a document can define
 characters, synthesize their local voice references, use them in standard
-`<voice>` turns, and optionally persist them as reusable profiles.
+`<voice>` turns, optionally persist them as reusable profiles, and provide a
+bounded natural-language delivery direction for an individual turn.
 
 ## Relationship To SSML
 
@@ -25,8 +26,9 @@ An SSML-H document:
 
 - uses the standard SSML `<speak>` root and SSML namespace;
 - keeps standard speech markup in the document body;
-- places Hangry Labs declarations in standard `<metadata>` using the SSML-H
-  namespace; and
+- places Hangry Labs declarations in standard `<metadata>` and Hangry Labs
+  attributes on the standard elements they extend, using the SSML-H namespace;
+  and
 - is processed through an explicit SSML-H input mode rather than inferred from
   plain text.
 
@@ -139,6 +141,41 @@ Voice-design descriptors describe the character identity. Standard body
 controls such as `<prosody rate="slow">` modify an individual turn and do not
 change the stored identity.
 
+## Per-Turn Direction
+
+Processors that advertise turn-direction support accept the optional
+SSML-H `direction` attribute on a standard `<voice>` element:
+
+```xml
+<voice name="Bob" h:direction="Energetic and delighted">
+  Welcome to the show.
+</voice>
+```
+
+The namespace is required. A bare `direction` attribute is invalid, and
+`h:direction` is invalid in ordinary `ssml` input mode. The value is a bounded
+plain-text instruction describing delivery for that voice turn. Leading,
+trailing, and repeated whitespace is normalized, and an empty value is an
+error. Version 1.0 limits the normalized value to 240 Unicode characters.
+
+Direction applies to speech within that `<voice>` element, including nested
+standard text and prosody elements. A nested `<voice>` starts a new turn and
+does not inherit the outer direction unless it declares its own
+`h:direction`. Text after the nested voice resumes the outer direction.
+
+Direction changes delivery, not speaker identity. It must not mutate a saved
+profile or a document voice definition. A processor may use model-native
+instructions, reference-only conditioning, or another documented mechanism,
+but it must preserve the resolved voice and must not synthesize the instruction
+as spoken text. Standard controls such as `<prosody>` still apply according to
+the processor's advertised behavior.
+
+Turn direction is capability-gated. A processor that cannot execute it must
+reject the attribute before inference rather than ignore it. Processors must
+also document any conditioning combinations they cannot support, such as a
+model that treats transcript-guided continuation and free-form direction as
+mutually exclusive.
+
 Processors publish the descriptors and values they support. A processor must
 reject unsupported requested descriptors; it must not silently ignore them.
 This permits one SSML-H lifecycle and document format across engines without
@@ -249,7 +286,9 @@ they should never turn persistence on as an implicit convenience.
     </h:extensions>
   </metadata>
 
-  <voice name="Bob" required="name">Are we ready?</voice>
+  <voice name="Bob" required="name" h:direction="Confident and upbeat">
+    Are we ready?
+  </voice>
   <break time="300ms" />
   <voice name="Elisabeth" required="name">
     Yes. <prosody rate="slow">Everything is prepared.</prosody>
@@ -289,6 +328,7 @@ limits before inference. Limits include at least:
 - voice definitions and synthesis units per document;
 - per-break and total break duration;
 - description and bootstrap-sample length;
+- per-turn direction length;
 - generated temporary audio and persistent profile size; and
 - model-specific token, phoneme, duration, queue, and request time limits.
 
@@ -296,6 +336,10 @@ The processor must reject unknown namespaces in synthesis content, external
 entities, DTDs, external references, path traversal, and unapproved remote
 resources. Errors must identify the unsupported element, attribute, value, or
 limit without exposing sensitive local paths.
+
+Directions and voice descriptions are untrusted plain text. Processors must
+pass them only through documented model-conditioning interfaces; they must not
+interpret them as code, file paths, URLs, templates, or authorization policy.
 
 ## Builders And Capability Discovery
 
@@ -310,6 +354,7 @@ Processors should expose machine-readable capabilities containing:
 - supported SSML-H versions and namespace URIs;
 - supported standard SSML elements and attributes;
 - supported voice-definition descriptors and accepted values;
+- whether per-turn direction is supported and its configured length limit;
 - supported languages and pronunciation alphabets;
 - configured document and generation limits; and
 - persistence availability and authorization requirements.
